@@ -6,8 +6,8 @@ struct Fenwick {
     std::vector<T> tr;
 
     Fenwick() {};
-    Fenwick(int _n = -1) {
-        n = _n + 1;
+    Fenwick(int _n) {
+        this->n = _n;
         tr.resize(n + 1);
     };
 
