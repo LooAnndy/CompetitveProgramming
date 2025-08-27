@@ -37,8 +37,7 @@ struct LSGT {
         tag[r(u)].apply(tag[u]), info[r(u)].apply(tag[u]);
         tag[u] = Tag();
     }
-    template <typename T>
-    void update(int ql, int qr, int u, int l, int r, const T add) {
+    void update(int ql, int qr, int u, int l, int r, const Info& add) {
         if (ql <= l && r <= qr) {
             info[u] = info[u] + add;
             tag[u] = tag[u] + add;
@@ -47,10 +46,10 @@ struct LSGT {
         int m = (l + r) >> 1;
         pushdown(u);
         if (ql <= m) {
-            update<T>(ql, qr, l(u), l, m, add);
+            update(ql, qr, l(u), l, m, add);
         }
         if (qr > m) {
-            update<T>(ql, qr, r(u), m + 1, r, add);
+            update(ql, qr, r(u), m + 1, r, add);
         }
         pushup(u);
     }

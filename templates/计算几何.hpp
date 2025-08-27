@@ -32,7 +32,7 @@ struct Point {
     int toleft(const Point& a) const {
         const auto t = (*this) ^ a;
         return (t > eps) - (t < -eps);
-    }                                                             // to-left 测试
+    } // to-left 测试
     T len2() const { return (*this) * (*this); }                  // 向量长度的平方
     T dis2(const Point& a) const { return (a - (*this)).len2(); } // 两点距离的平方
     int quad() const                                              // 象限判断 0:原点 1:x轴正 2:第一象限 3:y轴正 4:第二象限 5:x轴负 6:第三象限 7:y轴负 8:第四象限

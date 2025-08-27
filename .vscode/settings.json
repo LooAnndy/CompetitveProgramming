@@ -7,29 +7,30 @@
     "clangd.path": "clangd", // 直接使用环境变量
     // Clangd 运行参数(在终端/命令行输入 clangd --help-list-hidden 可查看更多)
     "clangd.arguments": [
-        "--background-index", // 后台分析并保存索引文件
-        "--clang-tidy", // 启用 Clang-Tidy 以提供「静态检查」，下面设置 clang tidy 规则
+        "--background-index",
+        "--clang-tidy",
         "--clang-tidy-checks=performance-*, bugprone-*, misc-*, google-*, modernize-*, readability-*, portability-*",
-        "--completion-parse=auto", // 当 clangd 准备就绪时，用它来分析建议
-        "--completion-style=detailed", // 建议风格：打包(重载函数只会给出一个建议);还可以设置为 detailed
-        // "--query-driver=/usr/bin/clang++", // MacOS 上需要设定 clang 编译器的路径，homebrew 安装的clang 是 /usr/local/opt/llvm/bin/clang++
-        // 启用配置文件(YAML格式)项目配置文件是在项目文件夹里的“.clangd”,用户配置文件是“clangd/config.yaml”,该文件来自:Windows: %USERPROFILE%\AppData\Local || MacOS: ~/Library/Preferences/ || Others: $XDG_CONFIG_HOME, usually ~/.config
+        "--completion-parse=auto",
+        "--completion-style=detailed",
+        "--function-arg-placeholders=false", //形参不输入
+        "--header-insertion=never",
         "--enable-config",
-        "--function-arg-placeholders=true", // 补全函数时，将会给参数提供占位符，键入后按 Tab 可以切换到下一占位符，乃至函数末
-        "--header-insertion-decorators", // 输入建议中，已包含头文件的项与还未包含头文件的项会以圆点加以区分
-        "--pch-storage=memory", // pch 优化的位置(Memory 或 Disk,前者会增加内存开销，但会提升性能)
-        "--pretty", // 输出的 JSON 文件更美观
-        "--ranking-model=decision_forest", // 建议的排序方案：hueristics (启发式), decision_forest (决策树)
-        "-j=12" // 同时开启的任务数量
+        "--function-arg-placeholders=true",
+        "--header-insertion-decorators",
+        "--pch-storage=memory",
+        "--pretty",
+        "--ranking-model=decision_forest",
+        "-j=12",
     ],
     // Clangd 找不到编译数据库(例如 compile_flags.json 文件)时采用的设置,缺陷是不能直接索引同一项目的不同文件,只能分析系统头文件、当前文件和include的文件
     "clangd.fallbackFlags": [
-        "--std=c++17",
+        "--std=c++20",
         "--target=x86_64-w64-windows-gnu",
     ],
     "clangd.onConfigChanged": "restart", // 重启 clangd 时重载配置,具体方法: F1 + Fn 打开命令面板，然后搜索“clangd: restart”
     "clangd.serverCompletionRanking": true,
     "cph.general.menuChoices": "cpp python js",
-    "cph.language.cpp.Args": "-std=c++17",
+    "cph.language.cpp.Args": "-std=c++20",
     "cph.language.cpp.SubmissionCompiler": "GNU G++17 7.3.0",
+    "editor.inlayHints.enabled": "offUnlessPressed",
 }

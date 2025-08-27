@@ -1,4 +1,22 @@
 ## 数学
+常见数据范围
+
+![约数个数](./数学/约数个数.png)
+
+### 逆元
+
+对任意模数p的逆元递推
+
+```c++
+std::vector<i64> inv(p);
+inv[1] = 1;
+for (i64 i = 2; i < p; i++) {
+    inv[i] = (p - (p / i) * 1LL * inv[p % i] % p) % p;
+}
+```
+### 组合数的恒等式和性质
+
+
 ### exgcd
 ```c++
 int exgcd(int a, int b, int& x, int& y) {
@@ -12,38 +30,123 @@ int exgcd(int a, int b, int& x, int& y) {
     return d;
 }
 ```
-### 线性筛
-```c++
-int n, primes[N], cnt = 0;
-bool st[N];
 
-void euler(int n) {
-    for (int i = 2; i < n; i++) {
-        if (!st[i]) primes[cnt++] = i;
-        for (int j = 0; primes[j] <= n / i; j++) {
-            st[primes[j] * i] = 1;
-            if (i % primes[j] == 0) break;
-        }
-    }
-    st[0] = st[1] = 1;
-}
-```
-### 线性基(异或线性基)
-1.普通消元(贪心)
+### 线性筛和一些数论函数
+$minp_{x}$代表x的最小质因数
+
+$mu_{x}$是$\mu(x)$莫比乌斯函数
+
+$
+\mu(n) = 
+\begin{cases} 
+1, & \text{若 } n = 1, \\
+0, & \text{若 } n \text{ 含有平方因子（即存在质数 } p \text{ 使得 } p^2 \mid n\text{）}, \\
+(-1)^k, & \text{若 } n \text{ 是 } k \text{ 个不同质数的乘积}.
+\end{cases}
+$
+
+$phi_{n}$是$\phi(n)$表示的是小于等于 
+n 并且 n 互质的数的个数
+
+一些积性函数都可以在线性筛中计算
 ```c++
-ull p[64];
-void insert(ull x) {
-    for (int i = 63; ~i; --i) {
-        if (!(x >> i & 1)) continue;
-        if (!p[i]) {
-            p[i] = x;
-            break;
-        }
-        x ^= p[i];
+struct Prime {
+    std::vector<int> primes, minp, mu, phi;
+
+    Prime(int n) {
+        sieve(n);
     }
-}
+
+    void sieve(int n) {
+        minp.assign(n + 1, 0);
+        mu.assign(n + 1, 0);
+        phi.assign(n + 1, 0);
+        primes.clear();
+
+        mu[1] = phi[1] = 1;
+        for (int i = 2; i <= n; i++) {
+            if (minp[i] == 0) {
+                primes.push_back(i);
+                minp[i] = i;
+                mu[i] = -1;
+                phi[i] = i - 1;
+            }
+
+            for (auto p : primes) {
+                if (i * p > n) {
+                    break;
+                }
+                minp[i * p] = p;
+                if (i % p == 0) {
+                    mu[i] = 0;
+                    phi[i * p] = phi[i] * p;
+                    break;
+                }
+                mu[i * p] = -mu[i];
+                phi[i * p] = phi[i] * (p - 1);
+            }
+        }
+    }
+};
 ```
-2.高斯消元
+
+#### 二项式反演
+第一种形式$g(n)表示至多n种方案的数量，f(n)表示恰好n种方案的数量$ $$g(n)=\sum_{i=0}^{n}{n \choose i}f(i)\Leftrightarrow  f(n) = \sum_{i=0}^{n}(-1)^{n-i}{n \choose i}g(i)$$ </br>
+第二种形式$g(k)表示至少k种方案的数量，f(k)表示恰好k种方案的数量$ $$g(k)=\sum_{i=k}^{n}{i \choose k}f(i)\Leftrightarrow  f(k) = \sum_{i=k}^{n}(-1)^{i-k}{i \choose k}g(i)$$</br>
+
+#### 欧拉函数反演
+$$n=\sum_{d|n}\phi(d)$$
+令$n=gcd(a,b)$，有
+
+$$gcd(a,b)=\sum_{d|gcd(a,b)}\phi(d)=\sum_{d}[d|a][d|b]\phi(d)$$
+
+那么
+
+$$
+\sum_{i=1}^{n} \gcd(i, n) = \sum_{d} \sum_{i=1}^{n} 
+[d|i] [d|n]
+ \varphi(d) = \sum_{d} \left\lfloor \frac{n}{d} \right\rfloor [d|n] \varphi(d) = \sum_{d|n} \left\lfloor \frac{n}{d} \right\rfloor \varphi(d).
+$$
+
+#### 莫比乌斯反演
+对于数论函数$g(n),f(n)$，如果有$$f(n)=\sum_{d|n}g(d)$$那么$$g(n)=\sum_{d|n}\mu(d)f(\frac{n}{d})$$
+
+### 线性基(异或线性基)
+
+```c++
+struct LinearBasis {
+    static constexpr int K = 60;
+    array<ull, K> b;
+
+    LinearBasis() {
+        b.fill(0);
+    }
+
+    bool insert(ull x) {
+        for (int i = K - 1; i >= 0; i--) {
+            if (!(x >> i & 1)) continue;
+            if (!b[i]) {
+                b[i] = x;
+                return 1;
+            }
+            x ^= b[i];
+        }
+        return 0;
+    }
+
+    ull ask(ull x = 0) {
+        for (int i = K - 1; i >= 0; i--) {
+            if ((x ^ b[i]) > x) {
+                x ^= b[i];
+            }
+        }
+        return x;
+    }
+};
+```
+
+### 高斯消元
+
 ```c++
 int row = 1;
 for (int col = 63; col >= 0 && row <= n; col--) {
@@ -64,18 +167,26 @@ for (int col = 63; col >= 0 && row <= n; col--) {
 }
 --row;
 ```
-#### 查询异或最值
-贪心，从最高（最低位）开始异或，每一轮都和ans取个max(min)
 #### 查询k小值
 高斯消元后能保证每一个位数上的1都是独特的，所以说查询第k个元素的时候直接
 对k进行二进制分解对于每一位上的1，去找线性基上唯一的1对应的数异或即可。
-注意对0的特判（没有0应该查询x-1）（线性基相比于原来的大小变小就是可以有0）
+
+注意对0的特判(没有0应该查询x-1)(线性基相比于原来的大小变小就是可以有0)
+
+## 多项式
+
 ## 图论
+
 ### 树
-1.重心
-性质：1.以树的重心为根时，所有子树的大小都不超过整棵树大小的一半，这个是充要条件（重心至多两个，并且相邻）</br>
+#### 重心
+
+性质:
+
+1.以树的重心为根时，所有子树的大小都不超过整棵树大小的一半，这个是充要条件（重心至多两个，并且相邻
+
 2.树中所有点到某个点的距离和中，到重心的距离和是最小的；如果有两个重心，那么到它们的距离和一样。
-2.树链剖分
+
+#### 树链剖分
 ```c++
 struct HLD {
     int n;
@@ -93,12 +204,11 @@ struct HLD {
         top.resize(n + 1);
         son.resize(n + 1);
         siz.resize(n + 1);
-        G.resize(n + 1);
+        G.assign(n, {});
     }
 
     void addEdge(int u, int v) {
         G[u].push_back(v);
-        G[v].push_back(u);
     }
 
     void work(int root = 1) {
@@ -133,13 +243,17 @@ struct HLD {
 
     int lca(int x, int y) {
         while (top[x] != top[y]) {
-            if (dep[top[x]] > dep[top[y]]) {
-                x = par[top[x]];
-            } else {
-                y = par[top[y]];
+            if (dep[top[x]] < dep[top[y]]) {
+                std::swap(x, y);
             }
+            // to do [dfn[top[x]] -> dfn[x]]
+            x = par[top[x]];
         }
-        return dep[x] < dep[y] ? x : y;
+        if (dep[x] < dep[y]) {
+            std::swap(x, y);
+        }
+        // to do [dfn[y] -> dfn[x]]
+        return y;
     }
 
     int dist(int u, int v) {
@@ -147,44 +261,225 @@ struct HLD {
     }
 };
 ```
-### 强连通分量
-```c++
-int scc = 0;
-int dfn[N] = { 0 }, low[N] = { 0 }, stamp = 0;
-int id[N];
-std::vector<int> G[N];
-void tarjan(int u) {
-    static int stk[N], top = -1;
-    static bool in_stk[N];
 
-    dfn[u] = low[u] = ++stamp;
-    stk[++top] = u, in_stk[u] = 1;
-    for (auto v : G[u]) {
-        if (!dfn[v]) {
-            tarjan(v);
-            low[u] = std::min(low[u], low[v]);
-        } else if (in_stk[v]) {
-            low[u] = std::min(low[u], dfn[v]);
+### 强连通分量
+
+```c++
+struct SCC {
+    int n;                             // 节点数
+    std::vector<std::vector<int>> adj; // 图的邻接表
+    std::vector<int> stk;              // 栈，用于 Tarjan 算法
+    std::vector<int> dfn, low, bel;    // dfn: 访问顺序, low: 最小可回溯 dfn, bel: 节点所属 SCC 编号
+    int cur, cnt;                      // cur: 当前时间戳, cnt: SCC 编号计数
+
+    SCC() {}
+    SCC(int n) {
+        init(n);
+    }
+
+    void init(int n) {
+        this->n = n;
+        adj.assign(n, {});
+        dfn.assign(n, -1);
+        low.resize(n);
+        bel.assign(n, -1);
+        stk.clear();
+        cur = cnt = 0;
+    }
+
+    void addEdge(int u, int v) {
+        adj[u].push_back(v);
+    }
+
+    void dfs(int x) {
+        dfn[x] = low[x] = cur++;
+        stk.push_back(x);
+
+        for (auto y : adj[x]) {
+            if (dfn[y] == -1) {
+                dfs(y);
+                low[x] = std::min(low[x], low[y]);
+            } else if (bel[y] == -1) {
+                low[x] = std::min(low[x], dfn[y]);
+            }
+        }
+
+        if (dfn[x] == low[x]) {
+            int y;
+            do {
+                y = stk.back();
+                bel[y] = cnt;
+                stk.pop_back();
+            } while (y != x);
+            cnt++;
         }
     }
 
-    if (dfn[u] == low[u]) {
-        ++scc;
-        int y;
-        do {
-            y = stk[top--];
-            in_stk[y] = 0;
-            id[y] = scc;
-        } while (y != u);
+    const std::vector<int>& work() {
+        for (int i = 0; i < n; i++) {
+            if (dfn[i] == -1) {
+                dfs(i);
+            }
+        }
+        return bel;
     }
-}
+};
 ```
+
 ### 点双
+
+```c++
+struct VDcc {
+    int n, stamp;
+    std::vector<int> dfn, low, stk, cut;
+    std::vector<std::vector<int>> adj, vDc;
+
+    VDcc() {}
+    VDcc(int n) {
+        init(n);
+    }
+
+    void init(int n) {
+        this->n = n;
+        stamp = -1;
+        dfn.assign(n, -1);
+        low.assign(n, -1);
+        cut.assign(n, 0);
+        adj.assign(n, {});
+
+        stk.clear();
+        vDc.clear();
+    }
+
+    void addEdge(int u, int v) {
+        adj[u].push_back(v);
+    }
+
+    void tarjan(int u, int anc) {
+        dfn[u] = low[u] = ++stamp;
+        if (adj[u].size() == 0) {
+            vDc.push_back({ u });
+            return;
+        }
+        stk.push_back(u);
+        int child = 0;
+        for (auto v : adj[u]) {
+            if (dfn[v] == -1) {
+                child++;
+                tarjan(v, anc);
+                low[u] = std::min(low[u], low[v]);
+                if (low[v] >= dfn[u]) {
+                    if (u != anc) {
+                        cut[u] = 1;
+                    }
+                    std::vector<int> vc;
+                    int tmp;
+                    do {
+                        tmp = stk.back();
+                        stk.pop_back();
+                        vc.push_back(tmp);
+                    } while (v != tmp);
+                    vc.push_back(u);
+                    vDc.push_back(vc);
+                }
+            } else {
+                low[u] = std::min(low[u], dfn[v]);
+            }
+        }
+        if (child >= 2 && u == anc) cut[u] = 1;
+    }
+
+    const std::vector<std::vector<int>>& work() {
+        for (int i = 0; i < n; i++) {
+            if (dfn[i] == -1) {
+                tarjan(i, i);
+            }
+        }
+        return vDc;
+    }
+};
+```
 
 ### 边双
 
+```c++
+struct EDcc {
+    int n, m, idx, stamp;
+    std::vector<int> e, ne, h;
+    std::vector<int> dfn, low, stk;
+    std::vector<char> bridge; // 判断边是不是桥
+    std::vector<std::vector<int>> eDc;
+
+    EDcc() {}
+    EDcc(int n, int m) {
+        init(n, m);
+    }
+
+    void init(int n, int m) {
+        this->n = n;
+        this->m = m;
+        idx = -1;
+        stamp = -1;
+        h.assign(n, -1);
+        dfn.assign(n, -1);
+        low.assign(n, -1);
+
+        ne.assign(m * 2, -1);
+        e.assign(m * 2, -1);
+        bridge.assign(m * 2, -1);
+
+        stk.clear();
+        eDc.clear();
+    }
+
+    void addEdge(int u, int v) {
+        e[++idx] = v;
+        ne[idx] = h[u];
+        h[u] = ++idx;
+    }
+
+    void tarjan(int u, int lst) {
+        dfn[u] = low[u] = ++stamp;
+        stk.push_back(u);
+
+        for (int i = h[u]; i != -1; i = ne[i]) {
+            int v = e[i];
+            if ((i ^ 1) == lst) continue;
+            if (dfn[v] == -1) {
+                tarjan(v, i);
+                low[u] = std::min(low[u], low[v]);
+                if (low[v] > dfn[u]) {
+                    bridge[i] = bridge[i ^ 1] = 1;
+                }
+            } else {
+                low[u] = std::min(low[u], dfn[v]);
+            }
+        }
+        if (dfn[u] == low[u]) {
+            std::vector<int> vc;
+            int tmp;
+            do {
+                tmp = stk.back();
+                stk.pop_back();
+                vc.push_back(tmp);
+            } while (tmp != u);
+            eDc.push_back(vc);
+        }
+    }
+
+    void work() {
+        for (int i = 0; i < n; i++) {
+            if (dfn[i] == -1) {
+                tarjan(i, -1);
+            }
+        }
+    }
+};
+```
 ### 网络流
+
 最大流
+
 ```c++
 struct MaxFlow {
     int n, m, idx;
@@ -357,7 +652,9 @@ private:
 
 ## 字符串
 先介绍一下$\pi$函数
+
 $$\pi[i] = \max_ {k = 0 \dots i} \{k : s[0 \dots k-1] = s[i-(k-1) \dots i] \}$$
+
 其中特殊地，$\pi[0]=0$
 ```c++
 std::vector<int> pre_pi(std::string s) {
@@ -375,7 +672,9 @@ std::vector<int> pre_pi(std::string s) {
 }
 ```
 ### kmp
+
 不妨把两个字符串连接在一起，利用$\pi$函数即可解决
+
 ```c++
 //return positions that successfully matched
 vector<int> find_occurrences(string text, string pattern) {
@@ -390,7 +689,9 @@ vector<int> find_occurrences(string text, string pattern) {
 }
 ```
 ### Z函数（扩展kmp）
+
 $z[i]$匹配的是s和s[i:]的最长公共前缀
+
 ```c++
 vector<int> z_function(string s) {
   int n = (int)s.length();
@@ -408,10 +709,86 @@ vector<int> z_function(string s) {
 }
 ```
 ### AC自动机
-现在还不会捏
+
+trie 树上的某一个节点代表前缀s的终止节点
+
+设这个节点为i，代表的前缀为s
+
+如果存在节点j，代表前缀为t，t的前缀最大匹配s的后缀，并且$s \neq t$
+
+那么$fail_{i} = j$
+
+这样的话匹配失败之后，fail指针就可以很快找到接下来的节点匹配了
+```c++
+
+struct AhoC {
+    static constexpr int N = 5E5 + 10, AP = 26, offset = 'a';
+
+    int idx = 0;
+    int nxt[N][AP];
+    int fail[N], cnt[N];
+
+    std::vector<pii> order;
+
+    AhoC() {}
+    void clear() {
+        order.clear();
+        for (int i = 0; i <= idx; i++) {
+            fail[i] = 0, cnt[i] = 0;
+            for (int j = 0; j < AP; j++) {
+                nxt[i][j] = 0;
+            }
+        }
+        idx = 0;
+    }
+
+    void insert(const std::string& s, int num) {
+        int p = 0;
+        for (int i = 0; i < (int) s.size(); i++) {
+            int u = s[i] - offset;
+            if (!nxt[p][u]) nxt[p][u] = ++idx;
+            p = nxt[p][u];
+        }
+        order.pb({ p, num });
+    }
+
+    void build() {
+        std::queue<int> q;
+        for (int i = 0; i < AP; i++) {
+            if (nxt[0][i]) {
+                q.push(nxt[0][i]);
+            }
+        }
+        while (!q.empty()) {
+            int u = q.front();
+            q.pop();
+            for (int i = 0; i < AP; i++) {
+                if (nxt[u][i]) {
+                    fail[nxt[u][i]] = nxt[fail[u]][i];
+                    q.push(nxt[u][i]);
+                } else {
+                    nxt[u][i] = nxt[fail[u]][i];
+                }
+            }
+        }
+    }
+
+    void query(const std::string& s) {
+        int p = 0;
+        for (int i = 0; i < (int) s.size(); i++) {
+            p = nxt[p][s[i] - offset];
+            for (int t = p; t; t = fail[t]) {
+                cnt[t]++;
+            }
+        }
+    }
+}
+```
 
 ### Manacher
-函数会把原先字符串两个数之间（包括头尾）插入'#'，d[i]表示以位置i为中心的最长回文字符串有多长
+
+函数会把原先字符串两个数之间（包括头尾）插入'#'，$d_{i}$表示以位置i为中心的最长回文字符串有多长
+
 ```c++
 std::vector<int> Manacher(std::string& t) {
     int n = t.size();
@@ -696,7 +1073,7 @@ struct Info {
 };
 ```
 ### 并查集
-v1 维护大小的并查集
+维护大小的并查集
 ```c++
 struct DSU {
     std::vector<int> f, siz;
@@ -739,13 +1116,13 @@ struct DSU {
     }
 };
 ```
+
 带权并查集（维护到根节点位置）
+
 ```c++
 struct WeightDSU {
-    /*
-    siz维护子树的大小
-    dist根到当前点的距离
-    */
+    // siz维护子树的大小
+    // dist根到当前点的距离
     std::vector<int> f, dist, dep;
 
     WeightDSU() {}

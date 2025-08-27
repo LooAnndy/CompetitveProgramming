@@ -1,4 +1,5 @@
 #include <bits/stdc++.h>
+// based on 1
 struct HLD {
     int n;
     std::vector<int> par, dep, top, son, siz;
@@ -20,7 +21,6 @@ struct HLD {
 
     void addEdge(int u, int v) {
         G[u].push_back(v);
-        G[v].push_back(u);
     }
 
     void work(int root = 1) {
@@ -55,13 +55,17 @@ struct HLD {
 
     int lca(int x, int y) {
         while (top[x] != top[y]) {
-            if (dep[top[x]] > dep[top[y]]) {
-                x = par[top[x]];
-            } else {
-                y = par[top[y]];
+            if (dep[top[x]] < dep[top[y]]) {
+                std::swap(x, y);
             }
+            // to do [dfn[top[x]] -> dfn[x]]
+            x = par[top[x]];
         }
-        return dep[x] < dep[y] ? x : y;
+        if (dep[x] < dep[y]) {
+            std::swap(x, y);
+        }
+        // to do [dfn[y] -> dfn[x]]
+        return y;
     }
 
     int dist(int u, int v) {
